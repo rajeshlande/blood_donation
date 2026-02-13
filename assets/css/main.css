@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #dc2626; /* Crimson Red for Blood Donation */
+  --primary-hover: #b91c1c;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-primary {
+  @apply bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-sm;
+}
+
+.card {
+  @apply bg-white p-6 rounded-xl shadow-sm border border-slate-100;
+}

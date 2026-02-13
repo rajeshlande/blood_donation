@@ -1,0 +1,136 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  BLOOD_BANK
+  CAMP_STAFF
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum BloodGroup {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+}
+
+enum DonorStatus {
+  REGISTERED
+  SCREENED
+  ELIGIBLE
+  DONATED
+  NOT_DONATED
+}
+
+enum CampStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @default(CAMP_STAFF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Donor {
+  id                String       @id @default(cuid())
+  name              String
+  age               Int
+  gender            Gender
+  bloodGroup        BloodGroup
+  mobile            String       @unique
+  email             String?      @unique
+  addressState      String
+  addressDistrict   String
+  addressCity       String
+  pincode           String?
+  lastDonationDate  DateTime?
+  medicalConditions String?
+  status            DonorStatus  @default(REGISTERED)
+  registeredCampId  String?
+  registeredCamp    Camp?        @relation("CampRegistrations", fields: [registeredCampId], references: [id])
+  donations         Donation[]
+  screenings        Screening[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model Camp {
+  id          String       @id @default(cuid())
+  name        String
+  date        DateTime
+  startTime   String?      // e.g. "09:00"
+  endTime     String?      // e.g. "17:00"
+  location    String
+  addressState    String?
+  addressDistrict String?
+  addressCity     String?
+  organizer   String?
+  bloodBank   String?      // Associated Blood Bank
+  status      CampStatus   @default(UPCOMING)
+  donations   Donation[]
+  screenings  Screening[]
+  registrations Donor[]    @relation("CampRegistrations")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Screening {
+  id              String       @id @default(cuid())
+  donorId         String
+  donor           Donor        @relation(fields: [donorId], references: [id])
+  campId          String
+  camp            Camp         @relation(fields: [campId], references: [id])
+  hb              Float        // Hemoglobin level
+  weight          Float        // Weight in kg
+  remarks         String?
+  examinedAt      DateTime     @default(now())
+  staffId         String?      // ID of the person who screened
+  outcome         DonorStatus  // Must be ELIGIBLE or NOT_DONATED
+  failureReason   String?      // Low HB, Low Weight, Medical issue
+}
+
+model Donation {
+  id              String       @id @default(cuid())
+  donorId         String
+  donor           Donor        @relation(fields: [donorId], references: [id])
+  campId          String?
+  camp            Camp?        @relation(fields: [campId], references: [id])
+  startTime       DateTime?
+  endTime         DateTime?
+  date            DateTime     @default(now())
+  location        String
+  units           Float        @default(1)
+  status          DonorStatus  // Using DonorStatus enum for consistency (DONATED or NOT_DONATED)
+  phlebotomistId  String?
+  failureReason   String?      // Vein accessibility, Discomfort, etc.
+  notes           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
